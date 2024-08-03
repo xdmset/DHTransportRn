@@ -14,7 +14,7 @@ const LoginScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://192.168.100.10:5001/api/user');
+        const response = await fetch('http://192.168.100.10:5000/api/user');
         if (!response.ok) {
           throw new Error(response.status);
         }

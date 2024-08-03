@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useAuth } from '../components/AuthProvider'; // Asumiendo que AuthProvider tiene un hook useAuth
+import { useAuth } from '../components/AuthProvider'; 
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale'; 
 
 const Historial = () => {
-  const [data, setData] = useState([]); // To store data from the API
-  const [isLoading, setIsLoading] = useState(true); // To handle loading state
+  const [data, setData] = useState([]);    
+  const [isLoading, setIsLoading] = useState(true); 
   const [isWrong, setIsWrong] = useState(false);
 
   const { user } = useAuth(); 
@@ -18,7 +19,7 @@ const Historial = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://192.168.100.10:5001/api/monitor');
+        const response = await fetch('http://192.168.100.10:5000/api/monitor');
 
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.statusText}`);
@@ -46,7 +47,7 @@ const Historial = () => {
     fetchData();
   }, []);
 
-  // Helper function to extract user information and match current user
+
   const getUserInfo = (clientId) => {
     if (clientId && clientId.user && clientId.user.length > 0) {
       const user = clientId.user[0];
@@ -59,7 +60,7 @@ const Historial = () => {
     }
   };
 
-  // Filter data based on the current user and date
+
   const currentUserName = usuarioAvatar(user?.name + " " + user?.lastName);
 
   const filteredData = data.filter((item) => {
@@ -83,7 +84,8 @@ const Historial = () => {
       const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
 
       // Format the date
-      const formattedDate = format(new Date(item.date), 'dd MMMM yyyy HH:mm');
+      const formattedDate = format(new Date(item.date), 'dd MMMM yyyy HH:mm', { locale: es });
+
 
       return (
         <View key={index} style={styles.card}>

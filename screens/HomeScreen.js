@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useAuth } from '../components/AuthProvider'; 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale'; 
 
 const HomeScreen = ({ navigation }) => {
   const [data, setData] = useState([]);
+  const [initialWeights, setInitialWeights] = useState(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [isWrong, setIsWrong] = useState(false);
+  const [alertShown, setAlertShown] = useState(false);
 
   const { user } = useAuth();
 
@@ -19,7 +21,7 @@ const HomeScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://192.168.100.10:5001/api/monitor');
+        const response = await fetch('http://192.168.100.10:5000/api/monitor');
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.statusText}`);
         }
@@ -27,6 +29,14 @@ const HomeScreen = ({ navigation }) => {
         console.log('API Response:', result);
         if (Array.isArray(result.monitor) && result.monitor.length > 0) {
           setData(result.monitor);
+
+          // Initialize the weights
+          const weights = new Map();
+          result.monitor.forEach(item => {
+            weights.set(item.id, item.weight);
+          });
+          setInitialWeights(weights);
+
           setIsWrong(false);
         } else {
           setData([]);
@@ -44,6 +54,27 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    // Verifica y muestra alerta si hay una temperatura mayor a 48.2°C
+    const highTemperatureItems = data.filter(item => item.temperature > 48.2);
+    if (highTemperatureItems.length > 0 && !alertShown) {
+      Alert.alert("Alerta", "Se han detectado temperaturas superiores a 48.2°C.");
+      setAlertShown(true);
+    }
+
+    // Verifica y muestra alerta si el peso ha cambiado
+    data.forEach(item => {
+      if (initialWeights.has(item.id)) {
+        const initialWeight = initialWeights.get(item.id);
+        if (item.weight !== initialWeight) {
+          Alert.alert("Alerta", `El peso del contenedor con ID ${item.id} ha cambiado.`);
+          // Optionally, you can remove the item from the Map after alerting
+          initialWeights.delete(item.id);
+        }
+      }
+    });
+  }, [data, alertShown, initialWeights]);
+
   const getUserInfo = (clientId) => {
     if (clientId && clientId.user && clientId.user.length > 0) {
       const user = clientId.user[0];
@@ -56,7 +87,7 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  const currentUserName = usuarioAvatar(user?.name + " "+ user?.lastName);
+  const currentUserName = usuarioAvatar(user?.name + " " + user?.lastName);
 
   const filteredData = data.filter((item) => {
     const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
@@ -82,23 +113,25 @@ const HomeScreen = ({ navigation }) => {
 
       return (
         <TouchableOpacity key={index} style={styles.card} onPress={() => handlePress(item)}>
-          <Text style={styles.cardText}>Cliente: {userInfo.name}</Text>
-          <Text style={styles.cardText}>Id de renta: {item.id}</Text>
-          <Text style={styles.cardText}>Fecha: {formattedDate}</Text>
-          <Text style={styles.cardText}>Temperatura: {item.temperature}°C</Text>
-          <Text style={styles.cardText}>Humedad: {item.humidity}%</Text>
-          <Text style={styles.cardText}>Peso: {item.weight}kg</Text>
+          <View style={styles.cardContent}>
+            <Text style={styles.cardText}>Id de renta: <Text style={styles.cardTextBold}>{item.id}</Text></Text>
+            <Text style={styles.cardText}>Fecha: <Text style={styles.cardTextBold}>{formattedDate}</Text></Text>
+            <Text style={styles.cardText}>Temperatura: <Text style={styles.cardTextBold}>{item.temperature}°C</Text></Text>
+            <Text style={styles.cardText}>Humedad: <Text style={styles.cardTextBold}>{item.humidity}%</Text></Text>
+            <Text style={styles.cardText}>Peso: <Text style={styles.cardTextBold}>{item.weight}kg</Text></Text>
+          </View>
         </TouchableOpacity>
       );
     });
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       {isLoading ? (
-        <Text style={styles.errorText}>Cargando...</Text>
+        <Text style={styles.loadingText}>Cargando...</Text>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollView}>
+          <Text style={styles.greetingText}>Hola {currentUserName}, estos son tus contenedores:</Text>
           {printData()}
         </ScrollView>
       )}
@@ -107,18 +140,36 @@ const HomeScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  errorText: {
-    color: 'black',
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  loadingText: {
+    color: '#1191D4',
     textAlign: 'center',
-    padding: 10,
+    padding: 20,
+    fontSize: 18,
+  },
+  errorText: {
+    color: '#1191D4',
+    textAlign: 'center',
+    padding: 20,
+    fontSize: 18,
   },
   scrollView: {
     alignItems: 'center',
     paddingTop: 20,
   },
+  greetingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333333',
+    textAlign: 'center',
+  },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ddd',
     shadowColor: '#000',
@@ -131,9 +182,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     padding: 15,
   },
+  cardContent: {
+    padding: 10,
+  },
   cardText: {
     fontSize: 16,
+    color: '#333333',
     marginBottom: 5,
+  },
+  cardTextBold: {
+    fontWeight: 'bold',
+    color: '#333333',
   },
 });
 
