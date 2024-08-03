@@ -10,6 +10,7 @@ import HomeScreen from "./screens/HomeScreen";
 import SettingScreen from "./screens/SettingScreen";
 import StackScreen from './screens/StackScreen'; 
 import AddNewUser from './screens/AddNewUser'
+import Historial from './components/HIstorial';
 
 import Detail from './screens/Detail';
 
@@ -73,6 +74,7 @@ export default function Navigation() {
                 <Stack.Screen name="Main" component={MyTabs} />
                 <Stack.Screen name="Detail" component={Detail} />
                 <Stack.Screen name="AddUser" component={AddNewUser} />
+                <Stack.Screen name="Historial" component={Historial}/>
             </Stack.Navigator>
         </NavigationContainer>
     );

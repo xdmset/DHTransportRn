@@ -20,6 +20,9 @@ const SettingScreen = ({ navigation }) => {
     }
   };
 
+  const handleHistorial = async () => {
+    navigation.navigate('Historial');
+  }
   return (
     <View style={styles.container}>
       <View style={styles.userSection}>
@@ -29,6 +32,9 @@ const SettingScreen = ({ navigation }) => {
         />
         <Text style={styles.username}>{"Bienvenido(a) " + usuarioAvatar(user?.name +" "+ user?.lastName)}</Text>
       </View>
+      <TouchableOpacity style={styles.button} onPress={handleHistorial}>
+        <Text style={styles.buttonText}>Historial</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.button} onPress={handleLogout}>
         <Text style={styles.buttonText}>Cerrar Sesión</Text>
       </TouchableOpacity>

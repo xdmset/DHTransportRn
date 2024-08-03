@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert, TouchableOpacity } from 'react-native';
+import { View, TextInput, Button, StyleSheet, Text, Alert, TouchableOpacity, Picker } from 'react-native';
 import axios from 'axios';
 
 import { apiURL } from '../api/apiGlobal';
@@ -8,48 +8,44 @@ const Formulario = ({ navigation }) => {
 
   const _apiURL = `${apiURL}/loginExample/registerUser.php`; 
 
-  const [nombre, setNombre] = useState('');
-  const [apPat, setApPat] = useState('');
-  const [apMat, setApMat] = useState('');
-  const [numTel, setNumTel] = useState('');
-  const [usuario, setUsuario] = useState('');
+  const [name, setName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [gender, setGender] = useState('male'); // Default value
   const [errors, setErrors] = useState({});
 
-  const validarCampos = () => {
+  const validateFields = () => {
     let isValid = true;
     let newErrors = {};
 
-    if (!nombre) {
-      newErrors.nombre = 'El nombre es obligatorio';
+    if (!name) {
+      newErrors.name = 'El nombre es obligatorio';
       isValid = false;
     }
-    if (!apPat) {
-      newErrors.apPat = 'El apellido paterno es obligatorio';
+    if (!lastName) {
+      newErrors.lastName = 'El apellido paterno es obligatorio';
       isValid = false;
     }
-    if (!apMat) {
-      newErrors.apMat = 'El apellido materno es obligatorio';
+    if (!middleName) {
+      newErrors.middleName = 'El apellido materno es obligatorio';
       isValid = false;
     }
-    if (!numTel) {
-      newErrors.numTel = 'El número de teléfono es obligatorio';
+    if (!phone) {
+      newErrors.phone = 'El número de teléfono es obligatorio';
       isValid = false;
-    } else if (numTel.length !== 10) {
-      newErrors.numTel = 'El número de teléfono debe tener 10 dígitos';
-      isValid = false;
-    }
-    if (!usuario) {
-      newErrors.usuario = 'La usuario es obligatorio';
+    } else if (phone.length !== 10) {
+      newErrors.phone = 'El número de teléfono debe tener 10 dígitos';
       isValid = false;
     }
     if (!email) {
-      newErrors.email = 'La email es obligatorio';
+      newErrors.email = 'El correo electrónico es obligatorio';
       isValid = false;
     }
     if (!password) {
-      newErrors.password = 'La constrasena es obligatoria';
+      newErrors.password = 'La contraseña es obligatoria';
       isValid = false;
     }
 
@@ -60,14 +56,14 @@ const Formulario = ({ navigation }) => {
   const handleTextChange = (text, type) => {
     if (/^[a-zA-Z\s]*$/.test(text)) {
       switch (type) {
-        case 'nombre':
-          setNombre(text);
+        case 'name':
+          setName(text);
           break;
-        case 'apPat':
-          setApPat(text);
+        case 'lastName':
+          setLastName(text);
           break;
-        case 'apMat':
-          setApMat(text);
+        case 'middleName':
+          setMiddleName(text);
           break;
         default:
           break;
@@ -76,37 +72,41 @@ const Formulario = ({ navigation }) => {
     }
   };
 
-  const handleNumTelChange = (text) => {
+  const handlePhoneChange = (text) => {
     if (/^\d{0,10}$/.test(text)) {
-      setNumTel(text);
-      setErrors(prev => ({...prev, numTel: ''}));
+      setPhone(text);
+      setErrors(prev => ({...prev, phone: ''}));
     }
   };
 
-
-  const enviarDatos = () => {
-    if (!validarCampos()) return;
+  const sendData = () => {
+    if (!validateFields()) return;
 
     axios.post(_apiURL, {
-      nombreDeUsuario: usuario, 
-      correoElectronico: email, 
+      name: name, 
+      lastName: lastName, 
+      middleName: middleName, 
+      phone: phone, 
+      email: email, 
       password: password, 
-      nombre: nombre, 
-      apellidoPaterno: apPat, 
-      apellidoMaterno: apMat, 
-      numeroDeTelefono: numTel, 
-      
+      gender: gender, 
+      role: 'Administrator' // Default value
     })
     .then(() => {
-      Alert.alert("Se ha realizado con éxito tu registro");
-      
-
-      // Reinicia tus campos aquí pendiente************************************************
+      Alert.alert("Registro exitoso", "Se ha realizado con éxito tu registro");
+      // Clear fields after successful registration
+      setName('');
+      setLastName('');
+      setMiddleName('');
+      setPhone('');
+      setEmail('');
+      setPassword('');
+      setGender('male');
     })
     .catch(() => {
       Alert.alert("Error", "Hubo un error al realizar tu registro");
     });
-};
+  };
 
   return (
     <View style={styles.mainContainer}>
@@ -114,57 +114,69 @@ const Formulario = ({ navigation }) => {
         <Text style={styles.headerText}>Datos Personales</Text>
         <TextInput
           style={styles.input}
-          onChangeText={(text) => handleTextChange(text, 'nombre')}
-          value={nombre}
+          onChangeText={(text) => handleTextChange(text, 'name')}
+          value={name}
           placeholder="Nombre"
         />
-        {errors.nombre && <Text style={styles.errorText}>{errors.nombre}</Text>}
+        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
         <TextInput
           style={styles.input}
-          onChangeText={(text) => handleTextChange(text, 'apPat')}
-          value={apPat}
+          onChangeText={(text) => handleTextChange(text, 'lastName')}
+          value={lastName}
           placeholder="Apellido Paterno"
         />
-        {errors.apPat && <Text style={styles.errorText}>{errors.apPat}</Text>}
+        {errors.lastName && <Text style={styles.errorText}>{errors.lastName}</Text>}
 
         <TextInput
           style={styles.input}
-          onChangeText={(text) => handleTextChange(text, 'apMat')}
-          value={apMat}
+          onChangeText={(text) => handleTextChange(text, 'middleName')}
+          value={middleName}
           placeholder="Apellido Materno"
         />
-        {errors.apMat && <Text style={styles.errorText}>{errors.apMat}</Text>}
+        {errors.middleName && <Text style={styles.errorText}>{errors.middleName}</Text>}
 
         <TextInput
           style={styles.input}
-          onChangeText={handleNumTelChange}
-          value={numTel}
-          placeholder="Numero de Telefono"
+          onChangeText={handlePhoneChange}
+          value={phone}
+          placeholder="Número de Teléfono"
+          keyboardType="numeric"
         />
-        {errors.numTel && <Text style={styles.errorText}>{errors.numTel}</Text>}
-        <Text style={styles.headerText}>Usuario</Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={(text) => setUsuario(text)}
-          value={usuario}
-          placeholder="Usuario"
-        />
+        {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+
+        <Text style={styles.headerText}>Género</Text>
+        <Picker
+          selectedValue={gender}
+          style={styles.picker}
+          onValueChange={(itemValue) => setGender(itemValue)}
+        >
+          <Picker.Item label="Masculino" value="male" />
+          <Picker.Item label="Femenino" value="female" />
+        </Picker>
+
+        <Text style={styles.headerText}>Correo Electrónico</Text>
         <TextInput
           style={styles.input}
           onChangeText={(text) => setEmail(text)}
           value={email}
-          placeholder="Correo Electronico"
+          placeholder="Correo Electrónico"
+          keyboardType="email-address"
         />
+        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+        <Text style={styles.headerText}>Contraseña</Text>
         <TextInput
           style={styles.input}
           onChangeText={(text) => setPassword(text)}
           value={password}
-          placeholder="Contrasena"
+          placeholder="Contraseña"
+          secureTextEntry
         />
+        {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
         
         <TouchableOpacity
-          onPress={enviarDatos}
+          onPress={sendData}
           style={styles.Button}
         >
           <Text style={styles.ButtonText}>
@@ -174,26 +186,13 @@ const Formulario = ({ navigation }) => {
 
       </View>
     </View>
-    
   );
 };
-
-
 
 const styles = StyleSheet.create({
   mainContainer: {
       flex: 1,
       backgroundColor: '#f1f1f1',
-      //alignItems: 'center',
-
-  },
-  userSection: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  svgContainer: {
-      alignItems: 'center',
-      marginTop: 50,
   },
   container: {
     marginTop: 90,
@@ -208,10 +207,17 @@ const styles = StyleSheet.create({
       marginBottom: 20,
       fontSize: 16,
   },
+  picker: {
+      width: '80%',
+      height: 50,
+      backgroundColor: '#fff',
+      borderRadius: 25,
+      marginBottom: 20,
+  },
   Button: {
       width: '80%',
       height: 50,
-      backgroundColor: '#FFCD11',
+      backgroundColor: '#1191D4',
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 25,
@@ -220,30 +226,8 @@ const styles = StyleSheet.create({
       color: '#000000',
       fontSize: 18,
   },
-  emailText: {
-      marginTop: 20,
-      color: 'grey',
-  },
-  textAddUser: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#333',
-      color: 'blue',
-      textDecorationLine: 'underline',
-  },
-  text: {
-      fontSize: 18,
-      //fontWeight: 'bold',
-      color: '#333',
-  },
-  containerRegister: {
-      padding: 20,
-      alignItems: 'center',
-
-  },
-  
   headerText: {
-    fontSize: 30, 
+    fontSize: 20, 
     fontWeight: 'bold', 
     marginBottom: 10, 
   },

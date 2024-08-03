@@ -14,7 +14,7 @@ const LoginScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://localhost:5001/api/user');
+        const response = await fetch('https://192.168.100.10:5001/api/user');
         if (!response.ok) {
           throw new Error(response.status);
         }
@@ -38,6 +38,12 @@ const LoginScreen = () => {
       console.log('Nombre de usuario o contraseña incorrectos.');
     }
   };
+
+  
+  const handleRegister = async () => {
+      navigation.navigate('AddUser');
+  }
+
 
   return (
     <View style={styles.mainContainer}>
@@ -73,9 +79,9 @@ const LoginScreen = () => {
         </TouchableOpacity>
         <View style={styles.containerRegister}>
           <Text style={styles.text}>Eres nuevo?</Text>
-          {/* <TouchableOpacity onPress={handleRegister}>
+          <TouchableOpacity onPress={handleRegister}>
             <Text style={styles.textAddUser}>Registrar</Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
       </View>
     </View>

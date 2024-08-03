@@ -1,58 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
-import axios from 'axios';
-import { useRoute } from '@react-navigation/native';
-import { apiURL } from '../api/apiGlobal'; // Importar apiURL desde apiGlobal
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
-const Detail = () => {
-  const route = useRoute();
-  const { code } = route.params;
+const Detail = ({ route }) => {
+  // Asegúrate de que 'item' esté definido
+  const { item } = route.params || {};
 
-  const [respuesta, setRespuesta] = useState([]);
-
-  useEffect(() => {
-    const realizarSolicitudPost = async () => {
-      const data = {
-        codigo: code,
-      };
-
-      try {
-        const response = await axios.post(`${apiURL}/rayApi/loginExample/getAllMachine.php`, data); // Usar apiURL de apiGlobal
-        setRespuesta(response.data);
-      } catch (error) {
-        console.error('Error en la solicitud:', error);
-      }
-    };
-
-    if (code) {
-      realizarSolicitudPost();
-    }
-  }, [code]);
-
-  const renderizarDatos = () => {
-    if (respuesta.length === 0) {
-      return <Text>Cargando...</Text>; // mensaje de carga mientras se espera la respuesta
-    }
-
-    return respuesta.map((elemento, index) => (
-      <View key={index} style={styles.card}>
-        <Text>Código: {elemento.codigo}</Text>
-        <Text>Precio por día: {elemento.precioDia}</Text>
-        {elemento.imagen && (
-          <Image source={{ uri: elemento.imagen }} style={styles.image} />
-        )}
-        <Text>Modelos: {elemento.modelos}</Text>
-        <Text>Marca: {elemento.marca}</Text>
-        <Text>Descripción: {elemento.descripcion}</Text>
-        <Text>Año: {elemento.anio}</Text>
-        <Text>Capacidad: {elemento.capacidad}</Text>
-        <Text>Categoría: {elemento.categoria}</Text>
-        <Text>Límite: {elemento.limite}</Text>
+  if (!item) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>No se proporcionaron detalles.</Text>
       </View>
-    ));
-  };
+    );
+  }
 
-  return <View style={styles.container}>{renderizarDatos()}</View>; // renderizar datos directamente
+  // Extrae la información del item
+  const userInfo = item.rentalId[0].clientId[0].user[0];
+  const rentalInfo = item.rentalId[0];
+  const formattedDate = format(new Date(item.date), 'dd MMMM yyyy HH:mm', { locale: es });
+
+  return (
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>Detalles del Pedido</Text>
+      <View   style={styles.containerDetail}>
+      <Text style={styles.detailText}>Cliente: {userInfo.name} {userInfo.lastName}</Text>
+      <Text style={styles.detailText}>Email: {userInfo.email}</Text>
+      <Text style={styles.detailText}>Teléfono: {userInfo.phone}</Text>
+      <Text style={styles.detailText}>Fecha: {formattedDate}</Text>
+      <Text style={styles.detailText}>Temperatura: {item.temperature}°C</Text>
+      <Text style={styles.detailText}>Humedad: {item.humidity}%</Text>
+      <Text style={styles.detailText}>Peso: {item.weight}kg</Text>
+      <Text style={styles.detailText}>Categoría: {rentalInfo.category}</Text>
+      <Text style={styles.detailText}>Subtotal: ${rentalInfo.subtotal.toFixed(2)}</Text>
+      <Text style={styles.detailText}>IVA: ${rentalInfo.vat.toFixed(2)}</Text>
+      <Text style={styles.detailText}>Total: ${rentalInfo.total.toFixed(2)}</Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>Detalles del Contenedor</Text>
+      {rentalInfo.containerIds.map((container, index) => (
+        <View key={index} style={styles.containerDetail}>
+          <Text style={styles.detailText}>ID del Contenedor: {container.id}</Text>
+          <Text style={styles.detailText}>Capacidad Usable: {container.usableCapacity} m³</Text>
+          <Text style={styles.detailText}>Capacidad por Metro: {container.capacityPerMeter} m³/m</Text>
+          <Text style={styles.detailText}>Capacidad Total: {container.totalCapacity} m³</Text>
+          <Text style={styles.detailText}>Precio: ${container.price.toFixed(2)}</Text>
+        </View>
+      ))}
+      {/* Añadir más campos si es necesario */}
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -60,17 +57,33 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
-  card: {
-    marginBottom: 20,
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  detailText: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  containerDetail: {
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 10,
-  },
-  image: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'contain',
-    marginBottom: 10,
   },
 });
 

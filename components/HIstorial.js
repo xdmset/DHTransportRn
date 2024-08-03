@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { useAuth } from '../components/AuthProvider'; 
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useAuth } from '../components/AuthProvider'; // Asumiendo que AuthProvider tiene un hook useAuth
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale'; 
 
-const HomeScreen = ({ navigation }) => {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+const Historial = () => {
+  const [data, setData] = useState([]); // To store data from the API
+  const [isLoading, setIsLoading] = useState(true); // To handle loading state
   const [isWrong, setIsWrong] = useState(false);
 
-  const { user } = useAuth();
+  const { user } = useAuth(); 
 
   function usuarioAvatar(str) {
     if (!str) return ""; 
@@ -20,11 +19,14 @@ const HomeScreen = ({ navigation }) => {
     const fetchData = async () => {
       try {
         const response = await fetch('https://192.168.100.10:5001/api/monitor');
+
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.statusText}`);
         }
+
         const result = await response.json();
         console.log('API Response:', result);
+
         if (Array.isArray(result.monitor) && result.monitor.length > 0) {
           setData(result.monitor);
           setIsWrong(false);
@@ -44,6 +46,7 @@ const HomeScreen = ({ navigation }) => {
     fetchData();
   }, []);
 
+  // Helper function to extract user information and match current user
   const getUserInfo = (clientId) => {
     if (clientId && clientId.user && clientId.user.length > 0) {
       const user = clientId.user[0];
@@ -56,16 +59,16 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  const currentUserName = usuarioAvatar(user?.name + " "+ user?.lastName);
+  // Filter data based on the current user and date
+  const currentUserName = usuarioAvatar(user?.name + " " + user?.lastName);
 
   const filteredData = data.filter((item) => {
     const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
-    return userInfo.name.includes(currentUserName);
-  });
+    const itemDate = new Date(item.date);
+    const today = new Date();
 
-  const handlePress = (item) => {
-    navigation.navigate('Detail', { item });
-  };
+    return userInfo.name.includes(currentUserName) && itemDate < today;
+  });
 
   const printData = () => {
     if (isWrong) {
@@ -78,17 +81,20 @@ const HomeScreen = ({ navigation }) => {
 
     return filteredData.map((item, index) => {
       const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
-      const formattedDate = format(new Date(item.date), 'dd MMMM yyyy HH:mm', { locale: es });
+
+      // Format the date
+      const formattedDate = format(new Date(item.date), 'dd MMMM yyyy HH:mm');
 
       return (
-        <TouchableOpacity key={index} style={styles.card} onPress={() => handlePress(item)}>
-          <Text style={styles.cardText}>Cliente: {userInfo.name}</Text>
-          <Text style={styles.cardText}>Id de renta: {item.id}</Text>
+        <View key={index} style={styles.card}>
+          <Text style={styles.cardText}>Usuario: {userInfo.name}</Text>
+          <Text style={styles.cardText}>ID: {item.id}</Text>
           <Text style={styles.cardText}>Fecha: {formattedDate}</Text>
           <Text style={styles.cardText}>Temperatura: {item.temperature}°C</Text>
           <Text style={styles.cardText}>Humedad: {item.humidity}%</Text>
           <Text style={styles.cardText}>Peso: {item.weight}kg</Text>
-        </TouchableOpacity>
+          {/* Add more fields as necessary */}
+        </View>
       );
     });
   };
@@ -137,4 +143,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default Historial;
