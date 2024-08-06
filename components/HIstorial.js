@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useAuth } from '../components/AuthProvider'; 
+import { useAuth } from '../components/AuthProvider';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale'; 
+import { es } from 'date-fns/locale';
 
 const Historial = () => {
-  const [data, setData] = useState([]);    
-  const [isLoading, setIsLoading] = useState(true); 
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isWrong, setIsWrong] = useState(false);
 
-  const { user } = useAuth(); 
+  const { user } = useAuth();
 
   function usuarioAvatar(str) {
-    if (!str) return ""; 
+    if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
@@ -47,7 +47,6 @@ const Historial = () => {
     fetchData();
   }, []);
 
-
   const getUserInfo = (clientId) => {
     if (clientId && clientId.user && clientId.user.length > 0) {
       const user = clientId.user[0];
@@ -60,15 +59,14 @@ const Historial = () => {
     }
   };
 
-
   const currentUserName = usuarioAvatar(user?.name + " " + user?.lastName);
 
   const filteredData = data.filter((item) => {
     const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
-    const itemDate = new Date(item.date);
+    const rentalStartDate = new Date(item.rentalId[0].startDate);
     const today = new Date();
 
-    return userInfo.name.includes(currentUserName) && itemDate < today;
+    return userInfo.name.includes(currentUserName) && rentalStartDate < today;
   });
 
   const printData = () => {
@@ -82,20 +80,23 @@ const Historial = () => {
 
     return filteredData.map((item, index) => {
       const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
+      const formattedStartDate = format(new Date(item.rentalId[0].startDate), 'dd MMMM yyyy HH:mm', { locale: es });
+      const formattedEndDate = format(new Date(item.rentalId[0].endDate), 'dd MMMM yyyy HH:mm', { locale: es });
 
-      // Format the date
-      const formattedDate = format(new Date(item.date), 'dd MMMM yyyy HH:mm', { locale: es });
-
+      // Obtener los últimos valores registrados
+      const latestTemperature = item.temperature ? item.temperature[item.temperature.length - 1] : 'N/A';
+      const latestHumidity = item.humidity ? item.humidity[item.humidity.length - 1] : 'N/A';
+      const latestWeight = item.weight ? item.weight[item.weight.length - 1] : 'N/A';
 
       return (
         <View key={index} style={styles.card}>
           <Text style={styles.cardText}>Usuario: {userInfo.name}</Text>
           <Text style={styles.cardText}>ID: {item.id}</Text>
-          <Text style={styles.cardText}>Fecha: {formattedDate}</Text>
-          <Text style={styles.cardText}>Temperatura: {item.temperature}°C</Text>
-          <Text style={styles.cardText}>Humedad: {item.humidity}%</Text>
-          <Text style={styles.cardText}>Peso: {item.weight}kg</Text>
-          {/* Add more fields as necessary */}
+          <Text style={styles.cardText}>Fecha de Inicio: {formattedStartDate}</Text>
+          <Text style={styles.cardText}>Fecha de Finalización: {formattedEndDate}</Text>
+          <Text style={styles.cardText}>Temperatura: {latestTemperature}°C</Text>
+          <Text style={styles.cardText}>Humedad: {latestHumidity}%</Text>
+          <Text style={styles.cardText}>Peso: {latestWeight}kg</Text>
         </View>
       );
     });

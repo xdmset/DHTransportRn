@@ -1,8 +1,9 @@
+// HomeScreen.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { useAuth } from '../components/AuthProvider'; 
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale'; 
+import { useAuth } from '../components/AuthProvider';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const HomeScreen = ({ navigation }) => {
   const [data, setData] = useState([]);
@@ -11,10 +12,13 @@ const HomeScreen = ({ navigation }) => {
   const [isWrong, setIsWrong] = useState(false);
   const [alertShown, setAlertShown] = useState(false);
 
+  // Nueva variable para guardar el array de fechas
+  const [extraDates, setExtraDates] = useState(new Map());
+
   const { user } = useAuth();
 
   function usuarioAvatar(str) {
-    if (!str) return ""; 
+    if (!str) return "";
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 
@@ -30,12 +34,24 @@ const HomeScreen = ({ navigation }) => {
         if (Array.isArray(result.monitor) && result.monitor.length > 0) {
           setData(result.monitor);
 
-          // Initialize the weights
+          // Inicializar los pesos
           const weights = new Map();
           result.monitor.forEach(item => {
-            weights.set(item.id, item.weight);
+            if (item.weight && item.weight.length > 0) {
+              weights.set(item.id, item.weight[item.weight.length - 1]);
+            }
           });
           setInitialWeights(weights);
+
+          // Inicializar las fechas adicionales
+          const datesMap = new Map();
+          result.monitor.forEach(item => {
+            if (item.date && item.date.length > 0) {
+              datesMap.set(item.id, item.date);
+            }
+          });
+          setExtraDates(datesMap);
+          console.log(datesMap);
 
           setIsWrong(false);
         } else {
@@ -56,7 +72,7 @@ const HomeScreen = ({ navigation }) => {
 
   useEffect(() => {
     // Verifica y muestra alerta si hay una temperatura mayor a 48.2°C
-    const highTemperatureItems = data.filter(item => item.temperature > 48.2);
+    const highTemperatureItems = data.filter(item => item.temperature && item.temperature.some(temp => temp > 48.2));
     if (highTemperatureItems.length > 0 && !alertShown) {
       Alert.alert("Alerta", "Se han detectado temperaturas superiores a 48.2°C.");
       setAlertShown(true);
@@ -64,11 +80,11 @@ const HomeScreen = ({ navigation }) => {
 
     // Verifica y muestra alerta si el peso ha cambiado
     data.forEach(item => {
-      if (initialWeights.has(item.id)) {
+      if (initialWeights.has(item.id) && item.weight && item.weight.length > 0) {
         const initialWeight = initialWeights.get(item.id);
-        if (item.weight !== initialWeight) {
+        if (item.weight[item.weight.length - 1] !== initialWeight) {
           Alert.alert("Alerta", `El peso del contenedor con ID ${item.id} ha cambiado.`);
-          // Optionally, you can remove the item from the Map after alerting
+          // Opcionalmente, puedes eliminar el ítem del Map después de alertar
           initialWeights.delete(item.id);
         }
       }
@@ -90,12 +106,16 @@ const HomeScreen = ({ navigation }) => {
   const currentUserName = usuarioAvatar(user?.name + " " + user?.lastName);
 
   const filteredData = data.filter((item) => {
-    const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
-    return userInfo.name.includes(currentUserName);
+    if (item.rentalId && item.rentalId[0] && item.rentalId[0].clientId && item.rentalId[0].clientId[0]) {
+      const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
+      return userInfo.name.includes(currentUserName);
+    }
+    return false;
   });
 
   const handlePress = (item) => {
-    navigation.navigate('Detail', { item });
+    // Pasar tanto el ítem como el array de fechas adicionales a la pantalla de detalles
+    navigation.navigate('Detail', { item, extraDates: extraDates.get(item.id) || [] });
   };
 
   const printData = () => {
@@ -108,17 +128,32 @@ const HomeScreen = ({ navigation }) => {
     }
 
     return filteredData.map((item, index) => {
-      const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
-      const formattedDate = format(new Date(item.date), 'dd MMMM yyyy HH:mm', { locale: es });
+      const userInfo = getUserInfo(item.rentalId[0]?.clientId[0]);
+
+      // Manejar startDate
+      let formattedStartDate = 'Fecha inválida';
+      if (item.rentalId && item.rentalId[0] && item.rentalId[0].startDate) {
+        try {
+          const date = parseISO(item.rentalId[0].startDate);
+          formattedStartDate = format(date, 'dd MMMM yyyy HH:mm', { locale: es });
+        } catch (error) {
+          console.error('Error parsing startDate:', error);
+        }
+      }
+
+      // Obtener los últimos valores registrados
+      const latestTemperature = item.temperature ? item.temperature[item.temperature.length - 1] : 'N/A';
+      const latestHumidity = item.humidity ? item.humidity[item.humidity.length - 1] : 'N/A';
+      const latestWeight = item.weight ? item.weight[item.weight.length - 1] : 'N/A';
 
       return (
         <TouchableOpacity key={index} style={styles.card} onPress={() => handlePress(item)}>
           <View style={styles.cardContent}>
             <Text style={styles.cardText}>Id de renta: <Text style={styles.cardTextBold}>{item.id}</Text></Text>
-            <Text style={styles.cardText}>Fecha: <Text style={styles.cardTextBold}>{formattedDate}</Text></Text>
-            <Text style={styles.cardText}>Temperatura: <Text style={styles.cardTextBold}>{item.temperature}°C</Text></Text>
-            <Text style={styles.cardText}>Humedad: <Text style={styles.cardTextBold}>{item.humidity}%</Text></Text>
-            <Text style={styles.cardText}>Peso: <Text style={styles.cardTextBold}>{item.weight}kg</Text></Text>
+            <Text style={styles.cardText}>Fecha de inicio: <Text style={styles.cardTextBold}>{formattedStartDate}</Text></Text>
+            <Text style={styles.cardText}>Temperatura: <Text style={styles.cardTextBold}>{latestTemperature}°C</Text></Text>
+            <Text style={styles.cardText}>Humedad: <Text style={styles.cardTextBold}>{latestHumidity}%</Text></Text>
+            <Text style={styles.cardText}>Peso: <Text style={styles.cardTextBold}>{latestWeight}kg</Text></Text>
           </View>
         </TouchableOpacity>
       );

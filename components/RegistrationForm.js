@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, StyleSheet, Text, Alert, TouchableOpacity, Picker } from 'react-native';
+import { View, TextInput, StyleSheet, Text, Alert, TouchableOpacity } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 
-import { apiURL } from '../api/apiGlobal';
-
 const Formulario = ({ navigation }) => {
-
-  const _apiURL = `${apiURL}/loginExample/registerUser.php`; 
+  const _apiURL = 'http://192.168.100.10:5000/api/user'; // URL 
 
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -68,32 +66,50 @@ const Formulario = ({ navigation }) => {
         default:
           break;
       }
-      setErrors(prev => ({...prev, [type]: ''}));
+      setErrors(prev => ({ ...prev, [type]: '' }));
     }
   };
 
   const handlePhoneChange = (text) => {
     if (/^\d{0,10}$/.test(text)) {
       setPhone(text);
-      setErrors(prev => ({...prev, phone: ''}));
+      setErrors(prev => ({ ...prev, phone: '' }));
     }
   };
 
-  const sendData = () => {
+  const sendData = async () => {
     if (!validateFields()) return;
 
-    axios.post(_apiURL, {
-      name: name, 
-      lastName: lastName, 
-      middleName: middleName, 
-      phone: phone, 
-      email: email, 
-      password: password, 
-      gender: gender, 
-      role: 'Administrator' // Default value
-    })
-    .then(() => {
+    try {
+      // Obtener todos los usuarios
+      const response = await axios.get(_apiURL);
+      console.log('Respuesta de la API:', response.data);
+
+      const users = response.data.users;
+      if (!Array.isArray(users)) {
+        throw new Error('El formato de la respuesta de la API no es una lista de usuarios');
+      }
+
+      // Encontrar el ID más alto
+      const highestId = users.reduce((max, user) => (user.id > max ? user.id : max), 0);
+      console.log('El ID más alto es:', highestId);
+      const nextId = highestId + 1;
+
+    
+      await axios.post(_apiURL, {
+        Id: nextId,
+        FirstName: name, 
+        LastName: lastName, 
+        MiddleName: middleName, 
+        Phone: phone, 
+        Email: email, 
+        Password: password, 
+        Gender: gender, 
+        Role: 'Customer' // Default value
+      });
+
       Alert.alert("Registro exitoso", "Se ha realizado con éxito tu registro");
+
       // Clear fields after successful registration
       setName('');
       setLastName('');
@@ -102,10 +118,10 @@ const Formulario = ({ navigation }) => {
       setEmail('');
       setPassword('');
       setGender('male');
-    })
-    .catch(() => {
+    } catch (error) {
+      console.error('Error al realizar el registro:', error);
       Alert.alert("Error", "Hubo un error al realizar tu registro");
-    });
+    }
   };
 
   return (
@@ -183,7 +199,6 @@ const Formulario = ({ navigation }) => {
             Realizar registro
           </Text>
         </TouchableOpacity>
-
       </View>
     </View>
   );
@@ -191,40 +206,40 @@ const Formulario = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   mainContainer: {
-      flex: 1,
-      backgroundColor: '#f1f1f1',
+    flex: 1,
+    backgroundColor: '#f1f1f1',
   },
   container: {
     marginTop: 90,
     alignItems: 'center',
   },
   input: {
-      width: '80%',
-      height: 50,
-      backgroundColor: '#fff',
-      borderRadius: 25,
-      padding: 15,
-      marginBottom: 20,
-      fontSize: 16,
+    width: '80%',
+    height: 50,
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    padding: 15,
+    marginBottom: 20,
+    fontSize: 16,
   },
   picker: {
-      width: '80%',
-      height: 50,
-      backgroundColor: '#fff',
-      borderRadius: 25,
-      marginBottom: 20,
+    width: '80%',
+    height: 50,
+    backgroundColor: '#fff',
+    borderRadius: 25,
+    marginBottom: 20,
   },
   Button: {
-      width: '80%',
-      height: 50,
-      backgroundColor: '#1191D4',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 25,
+    width: '80%',
+    height: 50,
+    backgroundColor: '#1191D4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
   },
   ButtonText: {
-      color: '#000000',
-      fontSize: 18,
+    color: '#000000',
+    fontSize: 18,
   },
   headerText: {
     fontSize: 20, 
