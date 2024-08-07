@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Importa tus componentes de pantalla
-import LoginScreen from './screens/LoginScreen'; // Asegúrate de que esta pantalla exista en tu directorio
+import LoginScreen from './screens/LoginScreen'; 
 import HomeScreen from "./screens/HomeScreen";
 import SettingScreen from "./screens/SettingScreen";
 import StackScreen from './screens/StackScreen'; 
@@ -21,7 +21,7 @@ const Stack = createNativeStackNavigator();
 function MyStack() {
     return (
         <Stack.Navigator initialRouteName='HomeScreen'>
-            <Stack.Screen name='Monitoreo' component={HomeScreen} />
+            <Stack.Screen name='Catalogo' component={HomeScreen} />
             <Stack.Screen name='StackScreen' component={StackScreen} />
         </Stack.Navigator>
     );

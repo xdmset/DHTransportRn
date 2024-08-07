@@ -3,7 +3,6 @@ import { Alert, View, Text, TextInput, TouchableOpacity, StatusBar, StyleSheet, 
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../components/AuthProvider';
-import { apiURL } from '../api/apiGlobal';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
@@ -15,9 +14,7 @@ const LoginScreen = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const url = apiURL + "/api/user"
-        console.log(url);
-        const response = await fetch(url);
+        const response = await fetch('http://192.168.100.10:5000/api/user');
         if (!response.ok) {
           throw new Error(response.status);
         }

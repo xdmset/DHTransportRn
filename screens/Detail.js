@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import MapView, { Marker } from 'react-native-maps';
-import { apiURL } from '../api/apiGlobal';
 
 const Detail = ({ route }) => {
   const { item, extraDates } = route.params || {};
@@ -11,9 +10,7 @@ const Detail = ({ route }) => {
   useEffect(() => {
     const fetchLocation = async () => {
       try {
-        const url = apiURL + "/api/location";
-        console.log(url);
-        const response = await fetch(url);
+        const response = await fetch('http://192.168.100.10:5000/api/location');
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.statusText}`);
         }
