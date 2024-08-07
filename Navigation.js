@@ -12,6 +12,9 @@ import StackScreen from './screens/StackScreen';
 import AddNewUser from './screens/AddNewUser'
 import Historial from './components/HIstorial';
 
+import ShoppingCartScreen from './screens/ShoppingCartScreen';
+import MonitorScreen from './screens/MonitorScreen';
+
 import Detail from './screens/Detail';
 
 const Tab = createBottomTabNavigator();
@@ -23,6 +26,7 @@ function MyStack() {
         <Stack.Navigator initialRouteName='HomeScreen'>
             <Stack.Screen name='Catalogo' component={HomeScreen} />
             <Stack.Screen name='StackScreen' component={StackScreen} />
+           
         </Stack.Navigator>
     );
 }
@@ -57,10 +61,21 @@ function MyTabs() {
                 options={{ tabBarLabel: "Inicio", headerShown: false }}
             />
             <Tab.Screen 
+                name="Cart" 
+                component={ShoppingCartScreen}
+                options={{ tabBarLabel: "Cart" }}
+            />
+            <Tab.Screen 
+                name="Monitoring" 
+                component={MonitorScreen}
+                options={{ tabBarLabel: "Monitor" }}
+            />
+            <Tab.Screen 
                 name="Settings" 
                 component={SettingScreen}
                 options={{ tabBarLabel: "Configuración" }}
             />
+             
         </Tab.Navigator>
     );
 }
@@ -75,6 +90,10 @@ export default function Navigation() {
                 <Stack.Screen name="Detail" component={Detail} />
                 <Stack.Screen name="AddUser" component={AddNewUser} />
                 <Stack.Screen name="Historial" component={Historial}/>
+                {/*Brayan Alv was here brrr*/}
+                <Stack.Screen name="Cart" component={ShoppingCartScreen}/>
+                <Stack.Screen name="Monitoring" component={MonitorScreen}/>
+
             </Stack.Navigator>
         </NavigationContainer>
     );

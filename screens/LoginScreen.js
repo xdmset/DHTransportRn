@@ -35,7 +35,7 @@ const LoginScreen = () => {
     const user = users.find(user => user.email === email && user.password === password);
     if (user) {
       console.log("Inicio de sesión exitoso");
-      await login(user.email, user.name, user.lastName);
+      await login(user.email, user.name, user.lastName, user.id);
       navigation.navigate('Main');
     } else {
       console.log('Nombre de usuario o contraseña incorrectos.');
