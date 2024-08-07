@@ -43,7 +43,12 @@ function MyTabs() {
                         iconName = focused ? 'home' : 'home-outline';
                     } else if (route.name === 'Settings') {
                         iconName = focused ? 'settings' : 'settings-outline';
+                    }else if (route.name === 'Cart') {
+                        iconName = focused ? 'cart' : 'cart-outline';
+                    }else if (route.name === 'Monitoring') {
+                        iconName = focused ? 'analytics' : 'analytics-outline';
                     }
+                    
                     // Return the icon component
                     return <Ionicons name={iconName} size={size} color={color} />;
                 },
@@ -90,7 +95,6 @@ export default function Navigation() {
                 <Stack.Screen name="Detail" component={Detail} />
                 <Stack.Screen name="AddUser" component={AddNewUser} />
                 <Stack.Screen name="Historial" component={Historial}/>
-                {/*Brayan Alv was here brrr*/}
                 <Stack.Screen name="Cart" component={ShoppingCartScreen}/>
                 <Stack.Screen name="Monitoring" component={MonitorScreen}/>
 

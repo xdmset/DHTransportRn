@@ -5,7 +5,6 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { apiURL } from '../api/apiGlobal';
 
-
 const Historial = () => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,26 +12,33 @@ const Historial = () => {
 
   const { user } = useAuth();
 
-  function usuarioAvatar(str) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const url = apiURL + "/api/monitor";
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.statusText}`);
+        const rentalUrl = apiURL + "/api/rental";
+        const clientUrl = apiURL + "/api/client";
+        
+        // Fetch rental data
+        const rentalResponse = await fetch(rentalUrl);
+        if (!rentalResponse.ok) {
+          throw new Error(`Network response was not ok: ${rentalResponse.statusText}`);
         }
-
-        const result = await response.json();
-        console.log('API Response:', result);
-
-        if (Array.isArray(result.monitor) && result.monitor.length > 0) {
-          setData(result.monitor);
+        const rentalResult = await rentalResponse.json();
+        
+        // Fetch client data
+        const clientResponse = await fetch(clientUrl);
+        if (!clientResponse.ok) {
+          throw new Error(`Network response was not ok: ${clientResponse.statusText}`);
+        }
+        const clientResult = await clientResponse.json();
+        
+        // Find clientId corresponding to the logged-in user
+        const clientData = clientResult.client.find(c => c.user[0].id === user.id);
+        const clientId = clientData ? clientData.clientId : null;
+        
+        if (clientId && Array.isArray(rentalResult.rental)) {
+          const userRentals = rentalResult.rental.filter(rental => rental.clientId[0].clientId === clientId);
+          setData(userRentals);
           setIsWrong(false);
         } else {
           setData([]);
@@ -48,7 +54,7 @@ const Historial = () => {
     };
 
     fetchData();
-  }, []);
+  }, [user.id]);
 
   const getUserInfo = (clientId) => {
     if (clientId && clientId.user && clientId.user.length > 0) {
@@ -62,44 +68,29 @@ const Historial = () => {
     }
   };
 
-  const currentUserName = usuarioAvatar(user?.name + " " + user?.lastName);
-
-  const filteredData = data.filter((item) => {
-    const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
-    const rentalStartDate = new Date(item.rentalId[0].startDate);
-    const today = new Date();
-
-    return userInfo.name.includes(currentUserName) && rentalStartDate < today;
-  });
-
   const printData = () => {
     if (isWrong) {
       return <Text style={styles.errorText}>Hubo un error al cargar los datos.</Text>;
     }
 
-    if (filteredData.length === 0) {
+    if (data.length === 0) {
       return <Text style={styles.errorText}>No se encontraron resultados.</Text>;
     }
 
-    return filteredData.map((item, index) => {
-      const userInfo = getUserInfo(item.rentalId[0].clientId[0]);
-      const formattedStartDate = format(new Date(item.rentalId[0].startDate), 'dd MMMM yyyy HH:mm', { locale: es });
-      const formattedEndDate = format(new Date(item.rentalId[0].endDate), 'dd MMMM yyyy HH:mm', { locale: es });
-
-      // Obtener los últimos valores registrados
-      const latestTemperature = item.temperature ? item.temperature[item.temperature.length - 1] : 'N/A';
-      const latestHumidity = item.humidity ? item.humidity[item.humidity.length - 1] : 'N/A';
-      const latestWeight = item.weight ? item.weight[item.weight.length - 1] : 'N/A';
+    return data.map((item, index) => {
+      const userInfo = getUserInfo(item.clientId[0]);
+      const formattedStartDate = format(new Date(item.startDate), 'dd MMMM yyyy HH:mm', { locale: es });
+      const formattedEndDate = format(new Date(item.endDate), 'dd MMMM yyyy HH:mm', { locale: es });
 
       return (
         <View key={index} style={styles.card}>
           <Text style={styles.cardText}>Usuario: {userInfo.name}</Text>
-          <Text style={styles.cardText}>ID: {item.id}</Text>
+          <Text style={styles.cardText}>ID de Renta: {item.rentalId}</Text>
           <Text style={styles.cardText}>Fecha de Inicio: {formattedStartDate}</Text>
           <Text style={styles.cardText}>Fecha de Finalización: {formattedEndDate}</Text>
-          <Text style={styles.cardText}>Temperatura: {latestTemperature}°C</Text>
-          <Text style={styles.cardText}>Humedad: {latestHumidity}%</Text>
-          <Text style={styles.cardText}>Peso: {latestWeight}kg</Text>
+          <Text style={styles.cardText}>Subtotal: ${item.subtotal.toFixed(2)}</Text>
+          <Text style={styles.cardText}>IVA: ${item.vat.toFixed(2)}</Text>
+          <Text style={styles.cardText}>Total: ${item.total.toFixed(2)}</Text>
         </View>
       );
     });
@@ -107,6 +98,9 @@ const Historial = () => {
 
   return (
     <View style={{ flex: 1 }}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Historial de Rentas</Text>
+      </View>
       {isLoading ? (
         <Text style={styles.errorText}>Cargando...</Text>
       ) : (
@@ -119,6 +113,18 @@ const Historial = () => {
 };
 
 const styles = StyleSheet.create({
+  header: {
+    backgroundColor: '#f8f9fa',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
   errorText: {
     color: 'black',
     textAlign: 'center',

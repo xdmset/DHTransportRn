@@ -24,7 +24,7 @@ const CartasPro = ({ id, usableCapacity, capacityPerMeter, totalCapacity, price,
       <Card.Content>
         <View style={styles.contentContainer}>
           <View style={styles.textContainer}>
-            {/*<Text style={styles.title}>Container ID: {id}</Text>*/}
+            <Text style={styles.title}>Container ID: {id}</Text>
             <Text style={styles.subtitle}>Usable Capacity: {usableCapacity.toFixed(2)} m³</Text>
             <Text style={styles.subtitle}>Capacity per Meter: {capacityPerMeter.toFixed(2)} m³/m</Text>
             <Text style={styles.subtitle}>Total Capacity: {totalCapacity.toFixed(2)} m³</Text>
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   button: {
     borderRadius: 20,
     marginLeft: 10, 
-    backgroundColor: '#FFCD11',
+    backgroundColor: '#1191D4',
     color: '#000000', 
     minWidth: 100, 
     height: 40, 

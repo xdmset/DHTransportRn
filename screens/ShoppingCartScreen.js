@@ -6,11 +6,9 @@ import { apiURL } from '../api/apiGlobal';
 import { useAuth } from '../components/AuthProvider';
 
 const ShoppingCartScreen = ({ navigation }) => {
-  const url = apiURL + "";
-
-  const { user } = useAuth(); 
-
-
+  const rentalUrl = apiURL + "/api/rental";
+  const clientUrl = apiURL + "/api/client";
+  const { user } = useAuth();
   const { cart, removeItemFromCart } = useCart();
   const cartIsEmpty = cart.length === 0;
 
@@ -35,56 +33,106 @@ const ShoppingCartScreen = ({ navigation }) => {
   const [showInicioPicker, setShowInicioPicker] = useState(false);
   const [showFinalPicker, setShowFinalPicker] = useState(false);
 
-  const [total, setTotal] = useState(0);
- 
-  //logica de RESERVA modificar very import
+  const [subtotal, setSubTotal] = useState(0);
+  const [highestId, setHighestId] = useState(0);
+  const [clientId, setClientId] = useState(null);
+
   useEffect(() => {
     if (!cartIsEmpty && fechaFinal >= fechaInicio) {
-      const newTotal = cart.reduce((acc, item) => acc + (item.price), 0);
-      setTotal(newTotal);
+      const newSubTotal = cart.reduce((acc, item) => acc + (item.price), 0);
+      setSubTotal(newSubTotal);
     }
   }, [fechaInicio, fechaFinal, cart]);
 
+  useEffect(() => {
+    const fetchHighestId = async () => {
+      try {
+        const response = await fetch(rentalUrl);
+        const data = await response.json();
+        if (data.status === 0 && Array.isArray(data.rental)) {
+          const ids = data.rental.map(rental => rental.rentalId);
+          const maxId = Math.max(...ids);
+          setHighestId(maxId);
+        } else {
+          console.error('Unexpected data format:', data);
+        }
+      } catch (error) {
+        console.error('Error fetching highest ID:', error);
+      }
+    };
+
+    fetchHighestId();
+  }, []);
+
+  useEffect(() => {
+    const fetchClientId = async () => {
+      try {
+        const response = await fetch(clientUrl);
+        const data = await response.json();
+        if (data.status === 0 && Array.isArray(data.client)) {
+          const client = data.client.find(client => client.user.some(u => u.id === user.id));
+          if (client) {
+            setClientId(client.clientId);
+          } else {
+            console.error('Client ID not found for user:', user.id);
+          }
+        } else {
+          console.error('Unexpected data format:', data);
+        }
+      } catch (error) {
+        console.error('Error fetching client ID:', error);
+      }
+    };
+
+    fetchClientId();
+  }, [user.id]);
+
   const formatDate = (date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
 
+  const iva = subtotal * 0.16;
+
   const handleInitializeReservation = async () => {
+    if (clientId === null) {
+      console.error('Client ID is not set');
+      return;
+    }
+
+    const newId = highestId + 1;
     const postData = {
-      Id: 23, // Reemplaza con los datos reales
-      Category: 'container renter',
+      Id: newId,
+      Category: 'container rental',
       StartDate: formatDate(fechaInicio),
       EndDate: formatDate(fechaFinal),
-      Subtotal: total,
-      Vat: 20.00,
-      Total: 120.00,
-      Container_Id: 1, // Asegúrate de que `item` esté definido y tenga `id`
-      Client_Id: user.id
+      Subtotal: subtotal,
+      Vat: iva,
+      Total: subtotal + iva,
+      Container_Id: cart[0]?.id, // Asegúrate de que `cart` no esté vacío
+      Client_Id: clientId
     };
-  
+
     try {
-      const response = await fetch(url, {
+      const response = await fetch(rentalUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(postData)
       });
-  
-      const textResponse = await response.text(); // Leer respuesta como texto
-      //console.log('Response text:', textResponse); // Mostrar respuesta en consola
-  
+
+      const textResponse = await response.text();
       let result;
       try {
-        result = JSON.parse(textResponse); // Intentar parsear como JSON
+        result = JSON.parse(textResponse);
       } catch (jsonError) {
         console.error('JSON Parse error:', jsonError);
         throw new Error('Invalid JSON response');
       }
-  
+
       if (response.ok) {
         alert(result.message || 'Reservation successful');
       } else {
@@ -95,7 +143,6 @@ const ShoppingCartScreen = ({ navigation }) => {
       alert('An error occurred while making the reservation');
     }
   };
-  
 
   return (
     <View style={styles.container}>
@@ -123,7 +170,7 @@ const ShoppingCartScreen = ({ navigation }) => {
       )}
       {!cartIsEmpty && (
         <View style={styles.totalContainer}>
-          <Text style={styles.totalText}>Total: ${total.toFixed(2)}</Text>
+          <Text style={styles.totalText}>Total: ${subtotal.toFixed(2)}</Text>
           <View style={styles.datePickerContainer}>
             <View style={styles.datePickerGroup}>
               <Button title="Seleccionar Fecha de Inicio" onPress={() => setShowInicioPicker(true)} />
@@ -221,49 +268,50 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   removeButton: {
-    backgroundColor: '#FFCD11',
+    backgroundColor: '#1191D4',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 5,
     alignSelf: 'flex-start',
   },
   removeButtonText: {
-    color: '#000',
-    fontSize: 14,
+    fontSize: 12,
+    color: 'white',
+    fontWeight: 'bold',
   },
   totalContainer: {
-    marginTop: 20,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderColor: "#e6e6e6",
   },
   totalText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
+    textAlign: "right",
+    marginBottom: 20,
   },
   datePickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: 20,
   },
   datePickerGroup: {
-    marginBottom: 10,
+    flex: 1,
+    alignItems: "center",
   },
   reserveButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
+    backgroundColor: "#1191D4",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    alignSelf: 'center',
+    minWidth: "80%",
   },
   reserveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });
 
