@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, Text, Alert, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import { apiURL } from '../api/apiGlobal';
+
 
 const Formulario = ({ navigation }) => {
-  const _apiURL = 'http://192.168.100.10:5000/api/user'; // URL 
+  const url = apiURL + "/api/user";
+  const _apiURL = url; // URL 
 
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');

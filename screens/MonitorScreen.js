@@ -4,6 +4,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'rea
 import { useAuth } from '../components/AuthProvider';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { apiURL } from '../api/apiGlobal';
+
 
 const MonitorScreen = ({ navigation }) => {
   const [data, setData] = useState([]);
@@ -25,7 +27,8 @@ const MonitorScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://192.168.100.10:5000/api/monitor');
+        const url = apiURL + "/api/monitor";
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.statusText}`);
         }

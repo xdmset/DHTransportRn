@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { apiURL } from '../api/apiGlobal';
+
 
 const HomeScreen = () => {
     const [containers, setContainers] = useState([]);
@@ -9,7 +11,8 @@ const HomeScreen = () => {
     useEffect(() => {
         const fetchContainers = async () => {
             try {
-                const response = await fetch('http://192.168.100.10:5000/api/container');
+                const url = apiURL + "/api/container";
+                const response = await fetch(url);
                 const data = await response.json();
 
                 if (data.status === 0) {
